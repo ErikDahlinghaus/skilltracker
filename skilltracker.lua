@@ -2,7 +2,7 @@ addon.name = 'skilltracker'
 addon.author = 'gnubeardo'
 addon.version = '1.0'
 addon.desc = 'Tracks your combat and magic skills against your cap'
-addon.link = ''
+addon.link = 'https://github.com/ErikDahlinghaus/skilltracker'
 
 require('common')
 local imgui = require('imgui')
