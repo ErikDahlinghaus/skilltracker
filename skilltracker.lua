@@ -1,6 +1,6 @@
 addon.name = 'skilltracker'
 addon.author = 'gnubeardo'
-addon.version = '1.1'
+addon.version = '1.2'
 addon.desc = 'Tracks your combat and magic skills against your cap'
 addon.link = 'https://github.com/ErikDahlinghaus/skilltracker'
 
@@ -134,13 +134,19 @@ local function getTargetMob()
             local mobName = entMgr:GetName(targetIndex)
             local cachedData = mobLevels[targetIndex]
 
-            -- Check if we have cached level data AND name matches AND not expired
+            -- Invalidate cached data if its old
+            if cachedData then
+                local age = os.time() - cachedData.timestamp
+                if age > config.expireMobLevelsSeconds[1] then
+                    mobLevels[targetIndex] = nil
+                    cachedData = nil
+                end
+            end
+
+            -- Check if we have cached level data AND name matches to guard against stale target indexes
             local level = nil
             if cachedData and cachedData.name == mobName and cachedData.level > 0 then
-                local age = os.time() - cachedData.timestamp
-                if age < config.expireMobLevelsSeconds[1] then  -- Expire after expireMobLevelsSeconds seconds
-                    level = cachedData.level
-                end
+                level = cachedData.level
             end
 
             -- Always return mob info, level may be nil if not checked yet
