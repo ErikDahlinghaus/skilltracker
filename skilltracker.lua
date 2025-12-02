@@ -1,6 +1,6 @@
 addon.name = 'skilltracker'
 addon.author = 'gnubeardo'
-addon.version = '1.2'
+addon.version = '1.3'
 addon.desc = 'Tracks your combat and magic skills against your cap'
 addon.link = 'https://github.com/ErikDahlinghaus/skilltracker'
 
@@ -694,6 +694,13 @@ ashita.events.register('packet_in', 'packet_in_cb', function(e)
     if e.id == 0x0029 then
         local level = struct.unpack('l', e.data, 0x0C + 0x01) -- Param 1 (Level)
         local targetIndex = struct.unpack('H', e.data, 0x16 + 0x01) -- Target index
+        local message = struct.unpack('H', e.data, 0x18 + 0x01); -- Message (Defense / Evasion)
+
+        -- Ensure this is a /check message
+        local message_check = T{ 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xF9 }
+        if not message_check:contains(message) then
+            return
+        end
 
         -- Get the mob name for validation
         local entity = GetEntity(targetIndex)
