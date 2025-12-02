@@ -1,6 +1,6 @@
 addon.name = 'skilltracker'
 addon.author = 'gnubeardo'
-addon.version = '1.0'
+addon.version = '1.1'
 addon.desc = 'Tracks your combat and magic skills against your cap'
 addon.link = 'https://github.com/ErikDahlinghaus/skilltracker'
 
@@ -43,6 +43,8 @@ local defaultConfig = T{
     showRank = T{true},
     showProgress = T{true},
     showCanSkillUp = T{true},
+    showMaxLevel = T{false},
+    hideMaxedSkills = T{false},
     -- Skill visibility (all enabled by default)
     showSkills = T{
         ["Hand-to-Hand"] = T{true},
@@ -79,7 +81,7 @@ local defaultConfig = T{
         ["Geomancy"] = T{true},
         ["Handbell"] = T{true},
     },
-    expireMobLevelsSeconds = 60
+    expireMobLevelsSeconds = T{60}
 }
 
 local config = settings.load(defaultConfig)
@@ -91,7 +93,7 @@ local configMenuWasOpen = false
 
 -- Mob level cache (populated from check packets and widescan)
 -- Stores: mobLevels[targetIndex] = {name = "Goblin", level = 15, timestamp = os.time()}
--- Entries expire after expireMobLevelsSeconds seconds
+-- Entries expire after expireMobLevelsSeconds seconds because target indexes get reused
 local mobLevels = T{}
 
 --------------------------------------------------------------------
@@ -136,7 +138,7 @@ local function getTargetMob()
             local level = nil
             if cachedData and cachedData.name == mobName and cachedData.level > 0 then
                 local age = os.time() - cachedData.timestamp
-                if age < config.expireMobLevelsSeconds then  -- Expire after expireMobLevelsSeconds seconds
+                if age < config.expireMobLevelsSeconds[1] then  -- Expire after expireMobLevelsSeconds seconds
                     level = cachedData.level
                 end
             end
@@ -275,6 +277,13 @@ local function renderSkillTracker()
             imgui.SameLine()
             imgui.SetCursorPosX(currentPos)
             imgui.Text('Can Skill Up?')
+            currentPos = currentPos + 120
+        end
+
+        if config.showMaxLevel[1] then
+            imgui.SameLine()
+            imgui.SetCursorPosX(currentPos)
+            imgui.Text('Max from Target')
         end
 
         imgui.Separator()
@@ -292,7 +301,18 @@ local function renderSkillTracker()
                 local cap = getSkillCap(jobAbbr, skillName, mainJobLevel)
 
                 if cap then
+                    -- Skip maxed skills if hideMaxedSkills is enabled
+                    if config.hideMaxedSkills[1] and currentSkill >= cap then
+                        goto continue
+                    end
+
                     local canGainSkill = targetMob and targetMob.level and canSkillUp(jobAbbr, skillName, targetMob.level, currentSkill, cap)
+
+                    -- Calculate max level achievable on current target
+                    local maxLevelOnTarget = nil
+                    if targetMob and targetMob.level then
+                        maxLevelOnTarget = getSkillCap(jobAbbr, skillName, targetMob.level)
+                    end
 
                     -- Calculate column positions dynamically
                     local colPos = 160
@@ -346,7 +366,21 @@ local function renderSkillTracker()
                         else
                             imgui.TextColored({0.5, 0.5, 0.5, 1.0}, '-')
                         end
+                        colPos = colPos + 120
                     end
+
+                    -- Max level on target (optional)
+                    if config.showMaxLevel[1] then
+                        imgui.SameLine()
+                        imgui.SetCursorPosX(colPos)
+                        if maxLevelOnTarget then
+                            imgui.Text(string.format('%d', maxLevelOnTarget))
+                        else
+                            imgui.TextColored({0.5, 0.5, 0.5, 1.0}, '-')
+                        end
+                    end
+
+                    ::continue::
                 end
             end
         end
@@ -396,6 +430,15 @@ local function renderConfigMenu()
 
         imgui.Checkbox('Show "Can Skill Up?" Column', config.showCanSkillUp)
         imgui.ShowHelp('Show which skills can gain skillups from targeted mob. Skill will still turn green if you can skill up.')
+
+        imgui.Checkbox('Show "Max on Target" Column', config.showMaxLevel)
+        imgui.ShowHelp('Show the maximum skill level you can achieve against the currently checked target.')
+
+        imgui.Checkbox('Hide Maxed Skills', config.hideMaxedSkills)
+        imgui.ShowHelp('Hide skills where your current level equals your cap.')
+
+        imgui.SliderInt('Expire Mob Levels (seconds)', config.expireMobLevelsSeconds, 30, 120)
+        imgui.ShowHelp('You shouldn\'t need to change this. Cached mob levels expire after this duration. FFXI reuses target indexes for mobs with the same name, so lower this when farming quickly to avoid stale data.')
 
         imgui.Text('')
         imgui.Separator()

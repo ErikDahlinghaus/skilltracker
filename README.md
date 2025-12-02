@@ -2,7 +2,14 @@
 
 A simple Ashita 4 addon that tracks your combat and magic skills against your skill caps.
 
+### UI Example
+
 ![UI](ui.png)
+
+
+### Minified with settings tweaked
+
+![UI Mini](ui_mini.png)
 
 ## Features
 
