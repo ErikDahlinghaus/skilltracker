@@ -18,7 +18,7 @@ local function getMerits()
         return nil
     end
 
-    ptr = ptr + 0x28A44
+    ptr = ptr + 0x2CFF4
     local count = ashita.memory.read_uint16(ptr + 2)
     local meritptr = ashita.memory.read_uint32(ptr + 4)
 
@@ -77,8 +77,6 @@ local function getMeritsBonusForSkill(skillId)
     if (merits == nil) then
         return 0
     end
-
-    print(inspect(merits))
     
     -- Each merit point gives you +2 skill bonus
     local bonusFromMerit = merits[skillId] * 2
