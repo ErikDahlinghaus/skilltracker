@@ -1,6 +1,6 @@
 addon.name = 'skilltracker'
 addon.author = 'gnubeardo'
-addon.version = '1.4'
+addon.version = '1.5'
 addon.desc = 'Tracks your combat and magic skills against your cap'
 addon.link = 'https://github.com/ErikDahlinghaus/skilltracker'
 
@@ -649,6 +649,10 @@ end
 -- Event: load
 --------------------------------------------------------------------
 ashita.events.register('load', 'load_cb', function()
+    -- Initialize the merits table once map has loaded
+    ashita.tasks.once(10, function()
+        merits.initMeritsTable()
+    end)
 end)
 
 --------------------------------------------------------------------
@@ -691,9 +695,16 @@ end)
 -- Event: packet_in (capture mob levels from check/widescan)
 --------------------------------------------------------------------
 ashita.events.register('packet_in', 'packet_in_cb', function(e)
-    -- Packet: Zone Enter / Zone Leave - clear mob level cache
+    -- Packet: Zone Enter / Zone Leave
     if e.id == 0x000A or e.id == 0x000B then
+        -- clear mob level cache
         mobLevels:clear()
+
+        -- reinit merit table after map has loaded
+        ashita.tasks.once(10, function()
+            merits.initMeritsTable()
+        end)
+
         return
     end
 

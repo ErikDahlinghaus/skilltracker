@@ -1,9 +1,7 @@
-local Merits = nil
+local merits = {}
 
-local function getMerits()
-    if Merits then
-        return Merits
-    end
+function merits.initMeritsTable()
+    merits.meritTable = {}
 
     local inv = AshitaCore:GetPointerManager():Get('inventory')
     if (inv == 0) then
@@ -22,18 +20,15 @@ local function getMerits()
     local count = ashita.memory.read_uint16(ptr + 2)
     local meritptr = ashita.memory.read_uint32(ptr + 4)
 
-    if (count > 0) then
-        Merits = {}
 
+    if (count > 0) then
         for i = 1,count do
             local meritId = ashita.memory.read_uint16(meritptr + 0)
             local meritUpgrades = ashita.memory.read_uint8(meritptr + 3)
-            Merits[meritId] = meritUpgrades
+            merits.meritTable[meritId] = meritUpgrades
             meritptr = meritptr + 4
         end
     end
-
-    return Merits
 end
 
 local skillIdtoMeritId = {
@@ -72,17 +67,19 @@ local skillIdtoMeritId = {
     [45] = 282,  -- Handbell
 }
 
-local function getMeritsBonusForSkill(skillId)
-    local merits = getMerits()
-    if (merits == nil) then
+function merits.getMeritsBonusForSkill(skillId)
+    if (merits.meritTable == nil) then
         return 0
     end
-    
+
     -- Each merit point gives you +2 skill bonus
-    local bonusFromMerit = merits[skillId] * 2
+    local meritCount = merits.meritTable[skillId]
+    if (meritCount == nil) then
+        return 0
+    end
+
+    local bonusFromMerit = merits.meritTable[skillId] * 2
     return bonusFromMerit
 end
 
-return {
-    getMeritsBonusForSkill = getMeritsBonusForSkill,
-}
+return merits
