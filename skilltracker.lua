@@ -1,6 +1,6 @@
 addon.name = 'skilltracker'
 addon.author = 'gnubeardo'
-addon.version = '1.3'
+addon.version = '1.4'
 addon.desc = 'Tracks your combat and magic skills against your cap'
 addon.link = 'https://github.com/ErikDahlinghaus/skilltracker'
 
@@ -14,6 +14,7 @@ local jobs = require('jobs')
 local skills = require('skills')
 local skillranks = require('skillranks')
 local skillcaps = require('skillcaps')
+local merits = require('merits')
 
 -- Ordered skill list for display (grouped by category, alphabetical within each)
 local orderedSkills = {
@@ -116,6 +117,12 @@ local function getSkillCap(jobAbbr, skillName, level)
 
     -- Get the cap for this rank/level combo
     local cap = skillcaps[rank] and skillcaps[rank][level]
+
+    -- Add merit bonus
+    local skillId = skills[skillName]
+    local meritBonus = merits.getMeritsBonusForSkill(skillId)
+    cap = cap + meritBonus
+
     return cap
 end
 
