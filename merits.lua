@@ -1,31 +1,35 @@
-local Merits = nil;
+local Merits = nil
 
 local function getMerits()
     if Merits then
         return Merits
     end
 
-    local inv = AshitaCore:GetPointerManager():Get('inventory');
+    local inv = AshitaCore:GetPointerManager():Get('inventory')
     if (inv == 0) then
-        return;
+        return nil
     end
-    local ptr = ashita.memory.read_uint32(inv);
+    local ptr = ashita.memory.read_uint32(inv)
     if (ptr == 0) then
-        return;
+        return nil
     end
-    ptr = ashita.memory.read_uint32(ptr);
+    ptr = ashita.memory.read_uint32(ptr)
     if (ptr == 0) then
-        return;
+        return nil
     end
-    ptr = ptr + 0x28A44;
-    local count = ashita.memory.read_uint16(ptr + 2);
-    local meritptr = ashita.memory.read_uint32(ptr + 4);
+
+    ptr = ptr + 0x28A44
+    local count = ashita.memory.read_uint16(ptr + 2)
+    local meritptr = ashita.memory.read_uint32(ptr + 4)
+
     if (count > 0) then
+        Merits = {}
+
         for i = 1,count do
-            local meritId = ashita.memory.read_uint16(meritptr + 0);
-            local meritUpgrades = ashita.memory.read_uint8(meritptr + 3);
-            Merits[meritId] = meritUpgrades;
-            meritptr = meritptr + 4;
+            local meritId = ashita.memory.read_uint16(meritptr + 0)
+            local meritUpgrades = ashita.memory.read_uint8(meritptr + 3)
+            Merits[meritId] = meritUpgrades
+            meritptr = meritptr + 4
         end
     end
 
@@ -69,13 +73,15 @@ local skillIdtoMeritId = {
 }
 
 local function getMeritsBonusForSkill(skillId)
-    local merits = getMerits();
+    local merits = getMerits()
     if (merits == nil) then
-        return 0;
+        return 0
     end
+
+    print(inspect(merits))
     
     -- Each merit point gives you +2 skill bonus
-    local bonusFromMerit = merits[skillId] * 2;
+    local bonusFromMerit = merits[skillId] * 2
     return bonusFromMerit
 end
 
